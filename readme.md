@@ -11,6 +11,8 @@ This repository contains code for a Kafka-based application to track and analyze
    docker-compose up
 
 3. Create a Kafka topic named `wiki-changes`:
+   docker ps
+   docker exec -it container_id /bin/sh
    kafka-topics.sh --create --topic wiki-changes --bootstrap-server localhost:9092 --partitions 1 --replication-factor 1
 
 ## Usage
