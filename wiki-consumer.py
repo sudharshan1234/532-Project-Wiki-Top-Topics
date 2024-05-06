@@ -11,12 +11,15 @@ spark = (SparkSession
          .getOrCreate())
 sc = spark.sparkContext
 
+bootstrap_servers="b-12.532cluster2.aqywu4.c3.kafka.us-east-1.amazonaws.com:9092,b-2.532cluster2.aqywu4.c3.kafka.us-east-1.amazonaws.com:9092,b-3.532cluster2.aqywu4.c3.kafka.us-east-1.amazonaws.com:9092"
+#bootstrap_servers="b-2.532cluster3.946d6e.c3.kafka.us-east-1.amazonaws.com:9092,b-3.532cluster3.946d6e.c3.kafka.us-east-1.amazonaws.com:9092,b-1.532cluster3.946d6e.c3.kafka.us-east-1.amazonaws.com:9092"
 # Create stream dataframe setting kafka server, topic and offset option
 df = (spark
       .readStream
       .format("kafka")
-      .option("kafka.bootstrap.servers", "localhost:9092")  # Make sure this is correct
+      .option("kafka.bootstrap.servers", bootstrap_servers)
       .option("subscribe", "wiki-changes")
+      .option("failOnDataLoss", "false")
       .load())
 
 
@@ -54,7 +57,7 @@ schema_wiki = StructType(
                  StructType(
                      [StructField("new",IntegerType(),True),
                       StructField("old",IntegerType(),True)]),True),
-     StructField("server_name",StringType(),True),
+                      StructField("server_name",StringType(),True),
      StructField("server_script_path",StringType(),True),
      StructField("server_url",StringType(),True),
      StructField("timestamp",StringType(),True),
@@ -110,11 +113,11 @@ df_wiki_formatted = (df_wiki.select(
     ,col("value.meta.uri").alias("meta_uri")
 ))
 
-df_wiki_formatted = df_wiki_formatted.withWatermark("change_timestamp", "5 minutes")
+df_wiki_formatted = df_wiki_formatted.withWatermark("change_timestamp", "30 minutes")
 current_time = unix_timestamp(current_timestamp())
-five_minutes_ago = expr("current_timestamp() - interval 5 minutes")
+thirty_minutes_ago = expr("current_timestamp() - interval 30 minutes")
 
-filtered_titles = df_wiki_formatted.filter(col("change_timestamp") >= five_minutes_ago)
+filtered_titles = df_wiki_formatted.filter(col("change_timestamp") >= thirty_minutes_ago)
 
 # Aggregate data to find trending titles
 # trending_titles = (filtered_titles
@@ -145,4 +148,3 @@ query =(
     .start())
 
 query.awaitTermination()
-

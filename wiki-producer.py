@@ -2,6 +2,8 @@ import json
 import logging
 from sseclient import SSEClient as EventSource
 from kafka import KafkaProducer
+from aws_msk_iam_sasl_signer import MSKAuthTokenProvider
+import socket
 
 # Set up logging
 logging.basicConfig(level=logging.ERROR)
@@ -18,10 +20,12 @@ def on_send_error(excp):
 
 # Create producer
 producer = KafkaProducer(
-    bootstrap_servers='localhost:9092', # Make sure this matches your Kafka server setup
-    value_serializer=lambda v: json.dumps(v).encode('utf-8')
+    bootstrap_servers=['b-2.532cluster3.946d6e.c3.kafka.us-east-1.amazonaws.com:9092','b-2.532cluster2.aqywu4.c3.kafka.us-east-1.amazonaws.com:9092','b-3.532cluster2.aqywu4.c3.kafka.us-east-1.amazonaws.com:9092'],
+    #bootstrap_servers=['b-2.532cluster3.946d6e.c3.kafka.us-east-1.amazonaws.com:9092','b-3.532cluster3.946d6e.c3.kafka.us-east-1.amazonaws.com:9092','b-1.532cluster3.946d6e.c3.kafka.us-east-1.amazonaws.com:9092'],
+    value_serializer=lambda v: json.dumps(v).encode('utf-8'),
+    security_protocol='PLAINTEXT',
+    api_version=(2,6,0)
 )
-
 # Read streaming event
 url = 'https://stream.wikimedia.org/v2/stream/recentchange'
 try:
